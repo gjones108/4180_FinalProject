@@ -1,13 +1,11 @@
 /*
-RESOURCES FOR I2C AND SENSORS
-LTR-303 (Light Sensor) Datasheet: https://cdn-shop.adafruit.com/product-files/5610/LTR-303ALS-01-Lite-On-datasheet-140480318.pdf
-DFRobot SEN0193 (Moisture Sensor) Datasheet: https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/2107/SEN0193_Web.pdf
-HTU21D (Temp/Humidity Sensor) Datasheet: https://cdn-shop.adafruit.com/datasheets/1899_HTU21D.pdf
+RESOURCES FOR I2C AND LIGHT SENSOR
+LTR-303 Datasheet: https://cdn-shop.adafruit.com/product-files/5610/LTR-303ALS-01-Lite-On-datasheet-140480318.pdf
+HTU21D (Temp/Humidity) Datasheet: https://cdn-shop.adafruit.com/datasheets/1899_HTU21D.pdf
+DFRobot SEN0193 (Moisture) Datasheet: https://www.digikey.com/en/products/detail/dfrobot/SEN0193/6588605
 I2C API Reference: https://os.mbed.com/docs/mbed-os/v6.16/apis/i2c.html
 I2C example: https://os.mbed.com/media/uploads/phill/mbed_course_notes_-_serial_communications_with_i2c.pdf
 */
-
-
 
 #include "mbed.h"
 #include "rtos.h"
@@ -150,7 +148,6 @@ int main()
     while(1){
         //Main assigns LED and pulls analog moisture sensor value
         //LED used to display light levels
-        
         LED = LEDVal;
         float val = 1 - moisture*1.1; //Output scales from 0-3v instead of 0-3.3v. Output is also inverted. 3.3v = 0 moisture, 0v = submerged.
         pc.printf("Moisture = %3.1f%% \n",val*100);
