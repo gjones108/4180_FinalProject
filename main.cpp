@@ -148,6 +148,8 @@ int main()
     Thread::wait(500);
     while(1){
         //Main assigns LED and pulls analog moisture sensor value
+        //LED used to display light levels
+        
         LED = LEDVal;
         float val = 1 - moisture*1.1; //Output scales from 0-3v instead of 0-3.3v. Output is also inverted. 3.3v = 0 moisture, 0v = submerged.
         pc.printf("Moisture = %3.1f%% \n",val*100);
