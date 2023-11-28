@@ -10,7 +10,7 @@ I2C example: https://os.mbed.com/media/uploads/phill/mbed_course_notes_-_serial_
 #include "mbed.h"
 #include "rtos.h"
 #include "uLCD_4DGL.h"
-//#include "PinDetect.h"
+#include "PinDetect.h"
 
 //Serial pc(USBTX,USBRX);
 uLCD_4DGL uLCD(p13,p14,p15);
@@ -22,17 +22,17 @@ AnalogIn moistureSensor(p20);
 Mutex LCD;
 InterruptIn RPG_A(p25);//encoder A and B pins/bits use interrupts
 InterruptIn RPG_B(p24);
-InterruptIn RPG_PB(p23); //encode pushbutton switch "SW" on PCB
+PinDetect RPG_PB(p23); //encode pushbutton switch "SW" on PCB
 
 float LEDVal;
 float ALS_Lux;
 float temper;
 float rh;
 float lightPercent;
-bool menu;
+volatile bool menu;
 
 volatile int old_enc = 0;
-volatile int enc_count = 0;
+volatile int enc_count = 2;
 
 const int lookup_table[] = {0,-1,1,0,1,0,0,-1,-1,0,0,1,0,1,-1,0};
 
@@ -182,15 +182,18 @@ int main()
     rh = 0;
     menu = true;
     // Starting Screen
+    LCD.lock();
     uLCD.locate(5,7);
     uLCD.text_height(2);
     uLCD.printf("Starting...");
+    LCD.unlock();
     //pc.printf("Starting... \n");
     wait(1);
     RPG_A.mode(PullUp);
     RPG_B.mode(PullUp);
-    RPG_PB.mode(PullUp);
-    RPG_PB.fall(&PB_callback);
+    RPG_PB.mode(PullDown);
+    RPG_PB.attach_deasserted(&PB_callback);
+    RPG_PB.setSampleFrequency(20000);
     // generate an interrupt on any change in either encoder bit (A or B)
     RPG_A.rise(&Enc_change_ISR);
     RPG_A.fall(&Enc_change_ISR);
@@ -199,7 +202,9 @@ int main()
     // Starting Threads
     Thread lightThread(lightSensorThread);
     Thread temp_Hum_Thread(tempHumThread);
+    LCD.lock();
     uLCD.cls();
+    LCD.unlock();
     int prevSel = 0;
     while(1){
         //Main assigns LED and pulls analog moisture sensor value
@@ -208,7 +213,7 @@ int main()
         float moisture = 1 - moistureSensor*1.1; //Output scales from 0-3v instead of 0-3.3v. Output is also inverted. 3.3v = 0 moisture, 0v = submerged.
         float moisturePercent = moisture*100;
         if(menu){
-            int selLoc = (int(enc_count / 4))*16;
+            int selLoc = (int(enc_count / 4)) << 4;
             LCD.lock();
             uLCD.locate(7,0);
             uLCD.text_height(1);
