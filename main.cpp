@@ -170,7 +170,7 @@ void tempHumThread(void const *args){
         rh = -6 + (125 * tempRH);
         //pc.printf("Temp = %.1f F \n", temper);
         //pc.printf("Relative Humidity = %.1f \n", rh);
-        //Thread::wait(1000);
+        Thread::wait(5000);
     }
 }
 
@@ -200,13 +200,13 @@ int main()
     Thread lightThread(lightSensorThread);
     Thread temp_Hum_Thread(tempHumThread);
     uLCD.cls();
+    int prevSel = 0;
     while(1){
         //Main assigns LED and pulls analog moisture sensor value
         //LED used to display light levels
         //LED = LEDVal;
         float moisture = 1 - moistureSensor*1.1; //Output scales from 0-3v instead of 0-3.3v. Output is also inverted. 3.3v = 0 moisture, 0v = submerged.
         float moisturePercent = moisture*100;
-        int prevSel = 0;
         if(menu){
             int selLoc = (int(enc_count / 4))*16;
             LCD.lock();
@@ -226,11 +226,11 @@ int main()
             uLCD.printf("Moisture: %.1f%%  ",moisturePercent);
             if(prevSel != selLoc){
                 uLCD.filled_rectangle(0, 30+prevSel, 5, 40+prevSel, 0x000000);
+                prevSel = selLoc;
             }
             // Printing selection square
             uLCD.filled_rectangle(0,30+selLoc,5, 40+selLoc, 0xFFFF20);
             LCD.unlock();
-            prevSel = selLoc;
         }
         Thread::wait(500);
         //pc.printf("enc_count: %d \n", enc_count);
