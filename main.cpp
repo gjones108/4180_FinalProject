@@ -9,22 +9,60 @@ I2C example: https://os.mbed.com/media/uploads/phill/mbed_course_notes_-_serial_
 
 #include "mbed.h"
 #include "rtos.h"
+#include "uLCD_4DGL.h"
+//#include "PinDetect.h"
 
-Serial pc(USBTX,USBRX);
+//Serial pc(USBTX,USBRX);
+uLCD_4DGL uLCD(p13,p14,p15);
 
 I2C lightSensor(p28, p27);
-PwmOut LED(p21);
+//PwmOut LED(p21);
 I2C tempHum(p9,p10);
-AnalogIn moisture(p20);
-
+AnalogIn moistureSensor(p20);
+Mutex LCD;
+InterruptIn RPG_A(p25);//encoder A and B pins/bits use interrupts
+InterruptIn RPG_B(p24);
+InterruptIn RPG_PB(p23); //encode pushbutton switch "SW" on PCB
 
 float LEDVal;
 float ALS_Lux;
 float temper;
 float rh;
+float lightPercent;
+bool menu;
 
-const int lightSensAddr = 0x52;      // 8bit I2C address
-const int tempHumAddress = 0x40 << 1;
+volatile int old_enc = 0;
+volatile int enc_count = 0;
+
+const int lookup_table[] = {0,-1,1,0,1,0,0,-1,-1,0,0,1,0,1,-1,0};
+
+void Enc_change_ISR(void)
+{
+    int new_enc = RPG_A<<1 | RPG_B;//current encoder bits
+    //check truth table for -1,0 or +1 added to count
+    enc_count = enc_count + (lookup_table[old_enc<<2 | new_enc]);
+    old_enc = new_enc;
+    if (enc_count>15) enc_count = 0;
+    if (enc_count<0) enc_count = 15;
+}
+//debounced RPG pushbutton switch callback
+void PB_callback(void)
+{
+    //pc.printf("Callback");
+    menu = !menu;
+    LCD.lock();
+    uLCD.cls();
+    LCD.unlock();
+    // menu = !menu;
+    // pc.printf("Bool Changed \n");
+    // wait(.1);
+    // pc.printf("Wait Over \n");
+    // LCD.lock();
+    // uLCD.cls();
+    // enc_count = 0;
+    // LCD.unlock();
+}
+
 
 void lightSensorThread(void const *args){
     char cmd[2];
@@ -37,35 +75,35 @@ void lightSensorThread(void const *args){
     // Starting ALS
     cmd[0] = 0x80;
     cmd[1] = 0x01;
-    lightSensor.write(lightSensAddr,cmd,2);
-    wait(0.1);
+    lightSensor.write(0x52,cmd,2);
+    Thread::wait(100);
     while (1) {
         cmd[0] = 0x8C;
-        lightSensor.write(lightSensAddr,cmd,1);
-        lightSensor.read(lightSensAddr,cmd,1);
+        lightSensor.write(0x52,cmd,1);
+        lightSensor.read(0x52,cmd,1);
 
         //Checking for new data value
         if ((cmd[0] & 0x04)){
             // Each has to be read 1 byte at a time. All 4 must be read to reset 0x8C new value bit
             // IR Lower Bit
             cmd[0] = 0x88;
-            lightSensor.write(lightSensAddr,cmd,1);
-            lightSensor.read(lightSensAddr,tempLight,1);
+            lightSensor.write(0x52,cmd,1);
+            lightSensor.read(0x52,tempLight,1);
             lightVal[0] = tempLight[0];
             // IR Upper Bit
             cmd[0] = 0x89;
-            lightSensor.write(lightSensAddr,cmd,1);
-            lightSensor.read(lightSensAddr,tempLight,1);
+            lightSensor.write(0x52,cmd,1);
+            lightSensor.read(0x52,tempLight,1);
             lightVal[1] = tempLight[0];
             // Light+IR Lower Bit
             cmd[0] = 0x8A;
-            lightSensor.write(lightSensAddr,cmd,1);
-            lightSensor.read(lightSensAddr,tempLight,1);
+            lightSensor.write(0x52,cmd,1);
+            lightSensor.read(0x52,tempLight,1);
             lightVal[2] = tempLight[0];
             // Light+IR Upper Bit
             cmd[0] = 0x8B;
-            lightSensor.write(lightSensAddr,cmd,1);
-            lightSensor.read(lightSensAddr,tempLight,1);
+            lightSensor.write(0x52,cmd,1);
+            lightSensor.read(0x52,tempLight,1);
             lightVal[3] = tempLight[0];
         }
 
@@ -91,11 +129,11 @@ void lightSensorThread(void const *args){
         }
         light = ALS_Lux * 2;
         LEDVal = float(light) / 65535;
-        float lightPercent = LEDVal*100;
-        pc.printf("Light = %.3f%% \n", lightPercent);
+        lightPercent = LEDVal*100;
+        //pc.printf("Light = %.1f%% \n", lightPercent);
         // pc.printf("Light = %d\n", light);
         // pc.printf("LED = %.3f \n \n \n", LEDVal);
-        Thread::wait(500);
+        Thread::wait(1000);
     }
 }
 
@@ -107,12 +145,13 @@ void tempHumThread(void const *args){
         char humidity[2];
         // Preparing to read Temp (HOLD ON)
         cmd[0] = 0xE3;
-        tempHum.write(tempHumAddress,cmd,1);
-        wait(0.05);
-        tempHum.read(tempHumAddress,temperature,2);
-        wait(0.001);
+        tempHum.write(0x80,cmd,1);
+        Thread::wait(50);
+        tempHum.read(0x80,temperature,2);
+        Thread::wait(1);
         unsigned int t = ((temperature[0] << 8) | temperature[1]);
         t &= 0xFFFC;
+        //t = t >> 2;
         temper = t;
         temper /= 65536.0f;
         temper *= 175.72f;
@@ -120,38 +159,86 @@ void tempHumThread(void const *args){
         temper = temper*1.8 + 32;
         // Preparing to read Humidity (HOLD ON)
         cmd[0] = 0xE5;
-        tempHum.write(tempHumAddress, cmd, 1);
-        wait(0.05);
-        tempHum.read(tempHumAddress,humidity,2);
-        wait(0.001);
+        tempHum.write(0x80, cmd, 1);
+        Thread::wait(50);
+        tempHum.read(0x80,humidity,2);
+        Thread::wait(1);
         // Humidity formula from datasheet
         unsigned int rawHumidity = (humidity[0] << 8) | humidity[1];
         rawHumidity &= 0xFFFC;
         float tempRH = rawHumidity / (float)65536; //2^16 = 65536
         rh = -6 + (125 * tempRH);
-        pc.printf("Temp = %.3f F \n", temper);
-        pc.printf("Relative Humidity = %.3f \n", rh);
-        Thread::wait(500);
+        //pc.printf("Temp = %.1f F \n", temper);
+        //pc.printf("Relative Humidity = %.1f \n", rh);
+        //Thread::wait(1000);
     }
 }
 
 int main()
 {
+    // Initialize variables
     temper = 0;
-    LED = 0;
+    //LED = 0;
     rh = 0;
-    pc.printf("Starting... \n");
+    menu = true;
+    // Starting Screen
+    uLCD.locate(5,7);
+    uLCD.text_height(2);
+    uLCD.printf("Starting...");
+    //pc.printf("Starting... \n");
     wait(1);
+    RPG_A.mode(PullUp);
+    RPG_B.mode(PullUp);
+    RPG_PB.mode(PullUp);
+    RPG_PB.fall(&PB_callback);
+    // generate an interrupt on any change in either encoder bit (A or B)
+    RPG_A.rise(&Enc_change_ISR);
+    RPG_A.fall(&Enc_change_ISR);
+    RPG_B.rise(&Enc_change_ISR);
+    RPG_B.fall(&Enc_change_ISR);
+    // Starting Threads
     Thread lightThread(lightSensorThread);
     Thread temp_Hum_Thread(tempHumThread);
-    Thread::wait(500);
+    uLCD.cls();
     while(1){
         //Main assigns LED and pulls analog moisture sensor value
         //LED used to display light levels
-        LED = LEDVal;
-        float val = 1 - moisture*1.1; //Output scales from 0-3v instead of 0-3.3v. Output is also inverted. 3.3v = 0 moisture, 0v = submerged.
-        pc.printf("Moisture = %3.1f%% \n",val*100);
-        pc.printf("\n");
+        //LED = LEDVal;
+        float moisture = 1 - moistureSensor*1.1; //Output scales from 0-3v instead of 0-3.3v. Output is also inverted. 3.3v = 0 moisture, 0v = submerged.
+        float moisturePercent = moisture*100;
+        if(menu){
+            LCD.lock();
+            uLCD.locate(7,0);
+            uLCD.text_height(1);
+            uLCD.color(0xEFFD5F);
+            uLCD.printf("MENU");
+            uLCD.color(WHITE);
+            // Printing Data values
+            uLCD.locate(1,4);
+            uLCD.printf("Light: %.1f%%  ", lightPercent);
+            uLCD.locate(1,6);
+            uLCD.printf("Temp: %.1f F  ", temper);
+            uLCD.locate(1,8);
+            uLCD.printf("Humidity: %.1f%% ", rh);
+            uLCD.locate(1,10);
+            uLCD.printf("Moisture: %.1f%%  ",moisturePercent);
+            uLCD.filled_rectangle(0, 30, 5, 88, 0x000000);
+            // Printing selection square
+            if (enc_count < 4){
+                uLCD.filled_rectangle(0, 30, 5, 40, 0xFFFF20);
+            }
+            else if (enc_count < 8){
+                uLCD.filled_rectangle(0, 46, 5, 56, 0xFFFF20);
+            }
+            else if (enc_count < 12){
+                uLCD.filled_rectangle(0, 62, 5, 72, 0xFFFF20);
+            }
+            else{
+                uLCD.filled_rectangle(0, 78, 5, 88, 0xFFFF20);
+            }
+            LCD.unlock();
+        }
         Thread::wait(500);
+        //pc.printf("enc_count: %d \n", enc_count);
     }
 }

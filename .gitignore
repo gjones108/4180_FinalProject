@@ -7,3 +7,9 @@ SDFileSystem
 mbed-rtos
 wave_player
 mbed
+.mbed
+compile_commands.json
+.clangd
+.cache
+uLCD_4DGL
+PinDetect
