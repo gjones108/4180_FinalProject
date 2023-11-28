@@ -206,7 +206,9 @@ int main()
         //LED = LEDVal;
         float moisture = 1 - moistureSensor*1.1; //Output scales from 0-3v instead of 0-3.3v. Output is also inverted. 3.3v = 0 moisture, 0v = submerged.
         float moisturePercent = moisture*100;
+        int prevSel = 0;
         if(menu){
+            int selLoc = (int(enc_count / 4))*16;
             LCD.lock();
             uLCD.locate(7,0);
             uLCD.text_height(1);
@@ -222,21 +224,13 @@ int main()
             uLCD.printf("Humidity: %.1f%% ", rh);
             uLCD.locate(1,10);
             uLCD.printf("Moisture: %.1f%%  ",moisturePercent);
-            uLCD.filled_rectangle(0, 30, 5, 88, 0x000000);
+            if(prevSel != selLoc){
+                uLCD.filled_rectangle(0, 30+prevSel, 5, 40*prevSel, 0x000000);
+            }
             // Printing selection square
-            if (enc_count < 4){
-                uLCD.filled_rectangle(0, 30, 5, 40, 0xFFFF20);
-            }
-            else if (enc_count < 8){
-                uLCD.filled_rectangle(0, 46, 5, 56, 0xFFFF20);
-            }
-            else if (enc_count < 12){
-                uLCD.filled_rectangle(0, 62, 5, 72, 0xFFFF20);
-            }
-            else{
-                uLCD.filled_rectangle(0, 78, 5, 88, 0xFFFF20);
-            }
+            uLCD.filled_rectangle(0,30+selLoc,5, 40+selLoc, 0xFFFF20);
             LCD.unlock();
+            prevSel = selLoc;
         }
         Thread::wait(500);
         //pc.printf("enc_count: %d \n", enc_count);
