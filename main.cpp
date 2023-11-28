@@ -225,7 +225,7 @@ int main()
             uLCD.locate(1,10);
             uLCD.printf("Moisture: %.1f%%  ",moisturePercent);
             if(prevSel != selLoc){
-                uLCD.filled_rectangle(0, 30+prevSel, 5, 40*prevSel, 0x000000);
+                uLCD.filled_rectangle(0, 30+prevSel, 5, 40+prevSel, 0x000000);
             }
             // Printing selection square
             uLCD.filled_rectangle(0,30+selLoc,5, 40+selLoc, 0xFFFF20);
