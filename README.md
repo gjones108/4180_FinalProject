@@ -1,6 +1,4 @@
 # 4180_FinalProject
-Source control
-
 Plant Health Monitor Project
 
 3 Sensors that track plant health, a uLCD screen to display data, a rotary pulse knob to select sensors and view previously recorded measurements
