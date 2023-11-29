@@ -12,7 +12,7 @@ I2C example: https://os.mbed.com/media/uploads/phill/mbed_course_notes_-_serial_
 #include "uLCD_4DGL.h"
 #include "PinDetect.h"
 
-//Serial pc(USBTX,USBRX);
+Serial pc(USBTX,USBRX);
 uLCD_4DGL uLCD(p13,p14,p15);
 
 I2C lightSensor(p28, p27);
@@ -20,9 +20,9 @@ I2C lightSensor(p28, p27);
 I2C tempHum(p9,p10);
 AnalogIn moistureSensor(p20);
 Mutex LCD;
-InterruptIn RPG_A(p25);//encoder A and B pins/bits use interrupts
-InterruptIn RPG_B(p24);
-PinDetect RPG_PB(p23); //encode pushbutton switch "SW" on PCB
+InterruptIn RPG_A(p16);//encoder A and B pins/bits use interrupts
+InterruptIn RPG_B(p17);
+DigitalIn RPG_PB(p18); //encode pushbutton switch "SW" on PCB
 
 float LEDVal;
 float ALS_Lux;
@@ -30,14 +30,20 @@ float temper;
 float rh;
 float lightPercent;
 volatile bool menu;
+volatile int saveSelection;
+
+float tempData[10];
+float humData[10];
+float lightData[10];
+float moistureData[10];
 
 volatile int old_enc = 0;
 volatile int enc_count = 2;
+volatile int selLoc;
 
 const int lookup_table[] = {0,-1,1,0,1,0,0,-1,-1,0,0,1,0,1,-1,0};
 
-void Enc_change_ISR(void)
-{
+void Enc_change_ISR(void){
     int new_enc = RPG_A<<1 | RPG_B;//current encoder bits
     //check truth table for -1,0 or +1 added to count
     enc_count = enc_count + (lookup_table[old_enc<<2 | new_enc]);
@@ -46,9 +52,12 @@ void Enc_change_ISR(void)
     if (enc_count<0) enc_count = 15;
 }
 //debounced RPG pushbutton switch callback
-void PB_callback(void)
-{
-    //pc.printf("Callback");
+void PB_callback(void){
+    pc.printf("Callback \n\r");
+    if (menu){
+        saveSelection = enc_count >> 2;
+    }
+    pc.printf("saveSelection = %d \n\r",saveSelection);
     menu = !menu;
     LCD.lock();
     uLCD.cls();
@@ -85,22 +94,22 @@ void lightSensorThread(void const *args){
         //Checking for new data value
         if ((cmd[0] & 0x04)){
             // Each has to be read 1 byte at a time. All 4 must be read to reset 0x8C new value bit
-            // IR Lower Bit
+            // CH1_0 (IR Lower Bit)
             cmd[0] = 0x88;
             lightSensor.write(0x52,cmd,1);
             lightSensor.read(0x52,tempLight,1);
             lightVal[0] = tempLight[0];
-            // IR Upper Bit
+            // CH1_1 (IR Upper Bit)
             cmd[0] = 0x89;
             lightSensor.write(0x52,cmd,1);
             lightSensor.read(0x52,tempLight,1);
             lightVal[1] = tempLight[0];
-            // Light+IR Lower Bit
+            // CH_0_0 (Light+IR Lower Bit)
             cmd[0] = 0x8A;
             lightSensor.write(0x52,cmd,1);
             lightSensor.read(0x52,tempLight,1);
             lightVal[2] = tempLight[0];
-            // Light+IR Upper Bit
+            // CH0_1 (Light+IR Upper Bit)
             cmd[0] = 0x8B;
             lightSensor.write(0x52,cmd,1);
             lightSensor.read(0x52,tempLight,1);
@@ -128,8 +137,12 @@ void lightSensorThread(void const *args){
             ALS_Lux = 0;
         }
         light = ALS_Lux * 2;
-        LEDVal = float(light) / 65535;
+        LEDVal = float(light) / 64000;
         lightPercent = LEDVal*100;
+        for(int i = 9; i > 0; i--){
+            lightData[i] = lightData[i - 1];
+        }
+        lightData[0] = lightPercent;
         //pc.printf("Light = %.1f%% \n", lightPercent);
         // pc.printf("Light = %d\n", light);
         // pc.printf("LED = %.3f \n \n \n", LEDVal);
@@ -157,6 +170,10 @@ void tempHumThread(void const *args){
         temper *= 175.72f;
         temper -= 46.85f;
         temper = temper*1.8 + 32;
+        for(int i = 9; i > 0; i--){
+            tempData[i] = tempData[i - 1];
+        }
+        tempData[0] = temper;
         // Preparing to read Humidity (HOLD ON)
         cmd[0] = 0xE5;
         tempHum.write(0x80, cmd, 1);
@@ -168,14 +185,17 @@ void tempHumThread(void const *args){
         rawHumidity &= 0xFFFC;
         float tempRH = rawHumidity / (float)65536; //2^16 = 65536
         rh = -6 + (125 * tempRH);
+        for(int i = 9; i > 0; i--){
+            humData[i] = humData[i - 1];
+        }
+        humData[0] = rh;
         //pc.printf("Temp = %.1f F \n", temper);
         //pc.printf("Relative Humidity = %.1f \n", rh);
         Thread::wait(5000);
     }
 }
 
-int main()
-{
+int main(){
     // Initialize variables
     temper = 0;
     //LED = 0;
@@ -191,9 +211,9 @@ int main()
     wait(1);
     RPG_A.mode(PullUp);
     RPG_B.mode(PullUp);
-    RPG_PB.mode(PullDown);
-    RPG_PB.attach_deasserted(&PB_callback);
-    RPG_PB.setSampleFrequency(20000);
+    RPG_PB.mode(PullUp);
+    //RPG_PB.attach_deasserted(&PB_callback);
+    //RPG_PB.setSampleFrequency();
     // generate an interrupt on any change in either encoder bit (A or B)
     RPG_A.rise(&Enc_change_ISR);
     RPG_A.fall(&Enc_change_ISR);
@@ -202,18 +222,28 @@ int main()
     // Starting Threads
     Thread lightThread(lightSensorThread);
     Thread temp_Hum_Thread(tempHumThread);
+    //PB_callback();
     LCD.lock();
     uLCD.cls();
     LCD.unlock();
     int prevSel = 0;
+    float moisture;
+    float moisturePercent;
     while(1){
         //Main assigns LED and pulls analog moisture sensor value
         //LED used to display light levels
         //LED = LEDVal;
-        float moisture = 1 - moistureSensor*1.1; //Output scales from 0-3v instead of 0-3.3v. Output is also inverted. 3.3v = 0 moisture, 0v = submerged.
-        float moisturePercent = moisture*100;
+        moisture = 1 - moistureSensor*1.1; //Output scales from 0-3v instead of 0-3.3v. Output is also inverted. 3.3v = 0 moisture, 0v = submerged.
+        moisturePercent = moisture*100;
+        for(int i = 9; i > 0; i--){
+            moistureData[i] = moistureData[i - 1];
+        }
+        moistureData[0] = moisturePercent;
+        if (!RPG_PB){
+            PB_callback();
+        }
         if(menu){
-            int selLoc = (int(enc_count / 4)) << 4;
+            selLoc = (enc_count >> 2) << 4;
             LCD.lock();
             uLCD.locate(7,0);
             uLCD.text_height(1);
@@ -236,6 +266,72 @@ int main()
             // Printing selection square
             uLCD.filled_rectangle(0,30+selLoc,5, 40+selLoc, 0xFFFF20);
             LCD.unlock();
+        }
+        else{
+            switch (saveSelection){
+                case 0:
+                    LCD.lock();
+                    uLCD.locate(7,0);
+                    uLCD.text_height(1);
+                    uLCD.color(0xEFFD5F);
+                    uLCD.printf("LIGHT");
+                    uLCD.color(WHITE);
+                    for(int i = 0; i < 10; i++){
+                        if (lightData[i] == 0){
+                            break;
+                        }
+                        uLCD.locate(0,2+i);
+                        uLCD.printf("%d: %.1f%%",i,lightData[i]);
+                    }
+                    break;
+                case 1:
+                    LCD.lock();
+                    uLCD.locate(7,0);
+                    uLCD.text_height(1);
+                    uLCD.color(0xEFFD5F);
+                    uLCD.printf("TEMP");
+                    uLCD.color(WHITE);
+                    for(int i = 0; i < 10; i++){
+                        if (tempData[i] == 0){
+                            break;
+                        }
+                        uLCD.locate(0,2+i);
+                        uLCD.printf("%d: %.1f%%",i,tempData[i]);
+                    }
+                    break;
+                case 2:
+                    LCD.lock();
+                    uLCD.locate(7,0);
+                    uLCD.text_height(1);
+                    uLCD.color(0xEFFD5F);
+                    uLCD.printf("HUMIDITY");
+                    uLCD.color(WHITE);
+                    for(int i = 0; i < 10; i++){
+                        if (humData[i] == 0){
+                            break;
+                        }
+                        uLCD.locate(0,2+i);
+                        uLCD.printf("%d: %.1f%%",i,humData[i]);
+                    }
+                    break;
+                case 3:
+                    LCD.lock();
+                    uLCD.locate(7,0);
+                    uLCD.text_height(1);
+                    uLCD.color(0xEFFD5F);
+                    uLCD.printf("MOISTURE");
+                    uLCD.color(WHITE);
+                    for(int i = 0; i < 10; i++){
+                        if (moistureData[i] == 0){
+                            break;
+                        }
+                        uLCD.locate(0,2+i);
+                        uLCD.printf("%d: %.1f%%",i,moistureData[i]);
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
         Thread::wait(500);
         //pc.printf("enc_count: %d \n", enc_count);
