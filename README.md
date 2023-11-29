@@ -1,5 +1,4 @@
-# 4180_FinalProject
-# Plant Health Monitor Project
+# Plant Health Monitor
 
 3 Sensors that track plant health, a uLCD screen to display data, a rotary pulse knob to select sensors and view previously recorded measurements
 Bluetooth for remote selection, and Wi-Fi for data recording
