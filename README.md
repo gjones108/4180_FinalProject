@@ -3,6 +3,8 @@
 3 Sensors that track plant health, a uLCD screen to display data, a rotary pulse knob to select sensors and view previously recorded measurements
 Bluetooth for remote selection, and Wi-Fi for data recording
 
+Microcontroller: mbed NXP LPC1768
+
 
 Sensors:
 
