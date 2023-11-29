@@ -1,8 +1,9 @@
 # 4180_FinalProject
-Plant Health Monitor Project
+# Plant Health Monitor Project
 
 3 Sensors that track plant health, a uLCD screen to display data, a rotary pulse knob to select sensors and view previously recorded measurements
 Bluetooth for remote selection, and Wi-Fi for data recording
+
 
 Sensors:
 
@@ -16,6 +17,9 @@ Lux (Light): LTR-303ALS-01 (https://www.adafruit.com/product/5610)
 
 Moisture: DFRobot SEN0193 (https://www.dfrobot.com/product-1385.html)
 --Analog sensor. Reports data vales from 0 - 3.0V
+
+
+Devices:
 
 uLCD: 144-G2 (https://os.mbed.com/users/4180_1/notebook/ulcd-144-g2-128-by-128-color-lcd/)
 
