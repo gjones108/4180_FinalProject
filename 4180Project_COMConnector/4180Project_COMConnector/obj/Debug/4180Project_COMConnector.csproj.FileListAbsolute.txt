@@ -9,3 +9,13 @@ C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_Final
 C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\obj\Debug\4180Project_COMConnector.csproj.CoreCompileInputs.cache
 C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\obj\Debug\4180Project_COMConnector.exe
 C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\obj\Debug\4180Project_COMConnector.pdb
+C:\Users\gjone\Desktop\4180Project_COMConnector\4180Project_COMConnector\obj\Debug\4180Project_COMConnector.csproj.AssemblyReference.cache
+C:\Users\gjone\Desktop\4180Project_COMConnector\4180Project_COMConnector\obj\Debug\_4180Project_COMConnector.Form1.resources
+C:\Users\gjone\Desktop\4180Project_COMConnector\4180Project_COMConnector\obj\Debug\_4180Project_COMConnector.Properties.Resources.resources
+C:\Users\gjone\Desktop\4180Project_COMConnector\4180Project_COMConnector\obj\Debug\4180Project_COMConnector.csproj.GenerateResource.cache
+C:\Users\gjone\Desktop\4180Project_COMConnector\4180Project_COMConnector\obj\Debug\4180Project_COMConnector.csproj.CoreCompileInputs.cache
+C:\Users\gjone\Desktop\4180Project_COMConnector\4180Project_COMConnector\obj\Debug\4180Project_COMConnector.exe
+C:\Users\gjone\Desktop\4180Project_COMConnector\4180Project_COMConnector\obj\Debug\4180Project_COMConnector.pdb
+C:\Users\gjone\Desktop\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\4180Project_COMConnector.exe.config
+C:\Users\gjone\Desktop\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\4180Project_COMConnector.exe
+C:\Users\gjone\Desktop\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\4180Project_COMConnector.pdb

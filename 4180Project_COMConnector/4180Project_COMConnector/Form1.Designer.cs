@@ -49,6 +49,9 @@
             this.pictureBox4 = new System.Windows.Forms.PictureBox();
             this.label1 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.SelTitle = new System.Windows.Forms.Label();
+            this.ArrayText = new System.Windows.Forms.Label();
+            this.BackButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
@@ -212,6 +215,7 @@
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBox1.TabIndex = 13;
             this.pictureBox1.TabStop = false;
+            this.pictureBox1.Click += new System.EventHandler(this.pictureBox1_Click);
             // 
             // pictureBox2
             // 
@@ -223,6 +227,7 @@
             this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBox2.TabIndex = 14;
             this.pictureBox2.TabStop = false;
+            this.pictureBox2.Click += new System.EventHandler(this.pictureBox2_Click);
             // 
             // pictureBox3
             // 
@@ -246,6 +251,7 @@
             this.pictureBox4.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBox4.TabIndex = 16;
             this.pictureBox4.TabStop = false;
+            this.pictureBox4.Click += new System.EventHandler(this.pictureBox4_Click);
             // 
             // label1
             // 
@@ -263,6 +269,9 @@
             // 
             this.panel1.BackColor = System.Drawing.SystemColors.Info;
             this.panel1.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("panel1.BackgroundImage")));
+            this.panel1.Controls.Add(this.BackButton);
+            this.panel1.Controls.Add(this.ArrayText);
+            this.panel1.Controls.Add(this.SelTitle);
             this.panel1.Controls.Add(this.label1);
             this.panel1.Controls.Add(this.pictureBox4);
             this.panel1.Controls.Add(this.pictureBox3);
@@ -286,6 +295,44 @@
             this.panel1.TabIndex = 0;
             this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
             // 
+            // SelTitle
+            // 
+            this.SelTitle.AutoSize = true;
+            this.SelTitle.BackColor = System.Drawing.Color.Transparent;
+            this.SelTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 24F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.SelTitle.ForeColor = System.Drawing.Color.LightGreen;
+            this.SelTitle.Location = new System.Drawing.Point(93, 19);
+            this.SelTitle.Name = "SelTitle";
+            this.SelTitle.Size = new System.Drawing.Size(200, 37);
+            this.SelTitle.TabIndex = 18;
+            this.SelTitle.Text = "Temperature";
+            this.SelTitle.Visible = false;
+            // 
+            // ArrayText
+            // 
+            this.ArrayText.AutoSize = true;
+            this.ArrayText.BackColor = System.Drawing.Color.Transparent;
+            this.ArrayText.Font = new System.Drawing.Font("Segoe UI", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ArrayText.ForeColor = System.Drawing.SystemColors.Window;
+            this.ArrayText.Location = new System.Drawing.Point(22, 69);
+            this.ArrayText.Name = "ArrayText";
+            this.ArrayText.Size = new System.Drawing.Size(100, 25);
+            this.ArrayText.TabIndex = 19;
+            this.ArrayText.Text = "Loading...";
+            this.ArrayText.Visible = false;
+            // 
+            // BackButton
+            // 
+            this.BackButton.BackColor = System.Drawing.Color.OliveDrab;
+            this.BackButton.Location = new System.Drawing.Point(130, 317);
+            this.BackButton.Name = "BackButton";
+            this.BackButton.Size = new System.Drawing.Size(120, 60);
+            this.BackButton.TabIndex = 20;
+            this.BackButton.Text = "Back";
+            this.BackButton.UseVisualStyleBackColor = false;
+            this.BackButton.Visible = false;
+            this.BackButton.Click += new System.EventHandler(this.BackButton_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -294,7 +341,7 @@
             this.ClientSize = new System.Drawing.Size(360, 386);
             this.Controls.Add(this.panel1);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "Plant Health Tracker";
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).EndInit();
@@ -326,6 +373,9 @@
         private System.Windows.Forms.PictureBox pictureBox4;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Label SelTitle;
+        private System.Windows.Forms.Label ArrayText;
+        private System.Windows.Forms.Button BackButton;
     }
 }
 
