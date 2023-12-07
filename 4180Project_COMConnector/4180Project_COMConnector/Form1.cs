@@ -17,9 +17,15 @@ namespace _4180Project_COMConnector
     public partial class Form1 : Form
     {
         private static Mutex mut = new Mutex();
+        
         private double lightData = -1;
         private double moistureData = -1;
         private double tempData = -1;
+        string[] tempArr = new string[10];
+        string[] lightArr = new string[10];
+        string[] moistArr = new string[10];
+        string[] humArr = new string[10];
+        int menuSel = 0;
 
         public Form1()
         {
@@ -81,6 +87,11 @@ namespace _4180Project_COMConnector
             {
                 // light
                 lightlabel.Text = post_equals;
+                for (int i = 9; i > 0; i--)
+                {
+                    lightArr[i] = lightArr[i - 1];
+                }
+                lightArr[0] = post_equals + "\n";
 
 
             }
@@ -88,22 +99,57 @@ namespace _4180Project_COMConnector
             {
                 // humidity
                 humidlabel.Text = post_equals;
+                for (int i = 9; i > 0; i--)
+                {
+                    humArr[i] = humArr[i - 1];
+                }
+                humArr[0] = post_equals + "\n";
             }
             else if (first == "T")
             {
                 // temperature
                 templabel.Text = post_equals;
+                for (int i = 9; i > 0; i--)
+                {
+                    tempArr[i] = tempArr[i - 1];
+                }
+                tempArr[0] = post_equals + "\n";
             }
             else if (first == "M")
             {
                 // moisture
                 moistlabel.Text = post_equals;
+                for (int i = 9; i > 0; i--)
+                {
+                    moistArr[i] = moistArr[i - 1];
+                }
+                moistArr[0] = post_equals + "\n";
             }
             else { 
                 // error
 
             }
-
+            switch (menuSel)
+            {
+                case 1:
+                    SelTitle.Text = "Light";
+                    ArrayText.Text = string.Join("", lightArr);
+                    break;
+                case 2:
+                    SelTitle.Text = "Humidity";
+                    ArrayText.Text = string.Join("",humArr); 
+                    break;
+                case 3:
+                    SelTitle.Text = "Mositure";
+                    ArrayText.Text = string.Join("", moistArr);
+                    break;
+                case 4:
+                    SelTitle.Text = "Temperature";
+                    ArrayText.Text = string.Join("", tempArr);
+                    break;
+                default:
+                    break;
+            }
             //mut.WaitOne();
             //String newData = inData;
             //mut.ReleaseMutex();
@@ -148,7 +194,83 @@ namespace _4180Project_COMConnector
 
         private void pictureBox3_Click(object sender, EventArgs e)
         {
+            menuHideShow(1);
+            menuSel = 4;
+        }
+        private void menuHideShow(int i)
+        {
+            if (i == 1)
+            {
+                pictureBox1.Hide();
+                pictureBox2.Hide();
+                pictureBox3.Hide();
+                pictureBox4.Hide();
+                button1.Hide();
+                label1.Hide();
+                label2.Hide();
+                label3.Hide();
+                label4.Hide();
+                label5.Hide();
+                label6.Hide();
+                label7.Hide();
+                lightlabel.Hide();
+                moistlabel.Hide();
+                templabel.Hide();
+                humidlabel.Hide();
+                thresholdtxt.Hide();
+                button1.Hide();
+                SelTitle.Show();
+                ArrayText.Show();
+                BackButton.Show();
+            }
+            else
+            {
+                pictureBox1.Show();
+                pictureBox2.Show();
+                pictureBox3.Show();
+                pictureBox4.Show();
+                button1.Show();
+                label1.Show();
+                label2.Show();
+                label3.Show();
+                label4.Show();
+                label5.Show();
+                label6.Show();
+                label7.Show();
+                lightlabel.Show();
+                moistlabel.Show();
+                templabel.Show();
+                humidlabel.Show();
+                thresholdtxt.Show();
+                button1.Show();
+                SelTitle.Hide();
+                ArrayText.Hide();
+                BackButton.Hide();
+            }
+        }
 
+        private void BackButton_Click(object sender, EventArgs e)
+        {
+            menuHideShow(0);
+            menuSel = 0;
+        }
+
+        private void pictureBox2_Click(object sender, EventArgs e)
+        {
+            menuHideShow(1);
+            menuSel = 2;
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+            menuHideShow(1);
+            menuSel = 1;
+        }
+
+        private void pictureBox4_Click(object sender, EventArgs e)
+        {
+            menuHideShow(1);
+            menuSel = 3;
         }
     }
 }
