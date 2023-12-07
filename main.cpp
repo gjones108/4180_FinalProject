@@ -11,18 +11,30 @@ I2C example: https://os.mbed.com/media/uploads/phill/mbed_course_notes_-_serial_
 #include "rtos.h"
 #include "uLCD_4DGL.h"
 #include "PinDetect.h"
+#include <string>
+#include <cstdlib>
 
-Serial pc(USBTX,USBRX);
+RawSerial pc(USBTX,USBRX);
 uLCD_4DGL uLCD(p13,p14,p15);
 
 I2C lightSensor(p28, p27);
-//PwmOut LED(p21);
+DigitalOut LED(p23);
 I2C tempHum(p9,p10);
 AnalogIn moistureSensor(p20);
 Mutex LCD;
 InterruptIn RPG_A(p16);//encoder A and B pins/bits use interrupts
 InterruptIn RPG_B(p17);
 DigitalIn RPG_PB(p18); //encode pushbutton switch "SW" on PCB
+PwmOut speaker(p22);
+BusOut mbedleds(LED1, LED2, LED3, LED4); // initialize LEDs
+DigitalIn alarmSwitch(p30);
+
+
+bool alarm = true;
+
+double moistureAlarmThresh = 30.0;
+char pcIn[2];
+char* pEnd;
 
 float LEDVal;
 float ALS_Lux;
@@ -53,23 +65,13 @@ void Enc_change_ISR(void){
 }
 //debounced RPG pushbutton switch callback
 void PB_callback(void){
-    pc.printf("Callback \n\r");
     if (menu){
         saveSelection = enc_count >> 2;
     }
-    pc.printf("saveSelection = %d \n\r",saveSelection);
     menu = !menu;
     LCD.lock();
     uLCD.cls();
     LCD.unlock();
-    // menu = !menu;
-    // pc.printf("Bool Changed \n");
-    // wait(.1);
-    // pc.printf("Wait Over \n");
-    // LCD.lock();
-    // uLCD.cls();
-    // enc_count = 0;
-    // LCD.unlock();
 }
 
 
@@ -136,16 +138,17 @@ void lightSensorThread(void const *args){
         else{
             ALS_Lux = 0;
         }
-        light = ALS_Lux * 2;
+        light = ALS_Lux * 4;
         LEDVal = float(light) / 64000;
         lightPercent = LEDVal*100;
+        if (lightPercent > 100){
+            lightPercent = 100.0;
+        }
         for(int i = 9; i > 0; i--){
             lightData[i] = lightData[i - 1];
         }
         lightData[0] = lightPercent;
-        //pc.printf("Light = %.1f%% \n", lightPercent);
-        // pc.printf("Light = %d\n", light);
-        // pc.printf("LED = %.3f \n \n \n", LEDVal);
+        pc.printf("Light = %.1f%% \n", lightPercent);
         Thread::wait(1000);
     }
 }
@@ -189,14 +192,15 @@ void tempHumThread(void const *args){
             humData[i] = humData[i - 1];
         }
         humData[0] = rh;
-        //pc.printf("Temp = %.1f F \n", temper);
-        //pc.printf("Relative Humidity = %.1f \n", rh);
+        pc.printf("Temp = %.1f F \n", temper);
+        pc.printf("Relative Humidity = %.1f%% \n", rh);
         Thread::wait(5000);
     }
 }
 
 int main(){
     // Initialize variables
+    
     temper = 0;
     //LED = 0;
     rh = 0;
@@ -208,10 +212,21 @@ int main(){
     uLCD.printf("Starting...");
     LCD.unlock();
     //pc.printf("Starting... \n");
-    wait(1);
+    for (int i = 0; i < 8; i++){
+        mbedleds = pow(2.0,double(i%4));
+        wait(0.1);
+    }
+    for (int i = 0; i < 2; i++){
+        mbedleds = 0;
+        wait(0.1);
+        mbedleds = 15;
+        wait(0.1);
+    }
+    mbedleds = 0;
     RPG_A.mode(PullUp);
     RPG_B.mode(PullUp);
     RPG_PB.mode(PullUp);
+    alarmSwitch.mode(PullUp);
     //RPG_PB.attach_deasserted(&PB_callback);
     //RPG_PB.setSampleFrequency();
     // generate an interrupt on any change in either encoder bit (A or B)
@@ -230,13 +245,31 @@ int main(){
     float moisture;
     float moisturePercent;
     while(1){
+        alarm = alarmSwitch;
+        LED = alarm;
+        if (pc.readable()) {     // if they have pressed a key
+            for (int i = 0; i < 2; i++){
+                pcIn[i] = pc.getc();
+            }
+            pc.printf("%s \n", pcIn);
+            moistureAlarmThresh = strtof(pcIn, &pEnd);
+            pc.printf("%f \n", moistureAlarmThresh);
+        }
         //Main assigns LED and pulls analog moisture sensor value
-        //LED used to display light levels
-        //LED = LEDVal;
         moisture = 1 - moistureSensor*1.1; //Output scales from 0-3v instead of 0-3.3v. Output is also inverted. 3.3v = 0 moisture, 0v = submerged.
-        moisturePercent = moisture*100;
+        moisturePercent = (moisture*100 - 14) * 30/13;
+        if (moisturePercent > 100){
+            moisturePercent = 100.0;
+        }
+        pc.printf("Moisture = %.1f%% \n", moisturePercent);
         for(int i = 9; i > 0; i--){
             moistureData[i] = moistureData[i - 1];
+        }
+        if (moisturePercent < moistureAlarmThresh){
+            speaker = alarm*0.5;
+        }
+        else{
+            speaker = 0;
         }
         moistureData[0] = moisturePercent;
         if (!RPG_PB){
