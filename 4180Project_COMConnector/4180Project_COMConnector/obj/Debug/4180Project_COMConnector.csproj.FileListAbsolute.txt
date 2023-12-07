@@ -19,3 +19,25 @@ C:\Users\gjone\Desktop\4180Project_COMConnector\4180Project_COMConnector\obj\Deb
 C:\Users\gjone\Desktop\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\4180Project_COMConnector.exe.config
 C:\Users\gjone\Desktop\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\4180Project_COMConnector.exe
 C:\Users\gjone\Desktop\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\4180Project_COMConnector.pdb
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\ClosedXML.dll
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\DocumentFormat.OpenXml.dll
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\ExcelNumberFormat.dll
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\Irony.dll
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\SixLabors.Fonts.dll
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\System.Buffers.dll
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\System.IO.Packaging.dll
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\System.Memory.dll
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\System.Numerics.Vectors.dll
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\System.Runtime.CompilerServices.Unsafe.dll
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\XLParser.dll
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\ClosedXML.xml
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\DocumentFormat.OpenXml.xml
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\ExcelNumberFormat.xml
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\SixLabors.Fonts.xml
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\System.Buffers.xml
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\System.IO.Packaging.xml
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\System.Memory.xml
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\System.Numerics.Vectors.xml
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\obj\Debug\4180Project_COMConnector.exe.config
+C:\Users\CAU Student\Documents\classes\tech\sem5\ece4180\project\repo\4180_FinalProject\4180Project_COMConnector\4180Project_COMConnector\obj\Debug\4180Project_COMConnector.csproj.CopyComplete

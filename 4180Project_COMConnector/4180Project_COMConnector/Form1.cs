@@ -4,12 +4,14 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.IO.Ports;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using ClosedXML.Excel;
 
 namespace _4180Project_COMConnector
 {
@@ -17,7 +19,7 @@ namespace _4180Project_COMConnector
     public partial class Form1 : Form
     {
         private static Mutex mut = new Mutex();
-        
+
         private double lightData = -1;
         private double moistureData = -1;
         private double tempData = -1;
@@ -125,10 +127,13 @@ namespace _4180Project_COMConnector
                 }
                 moistArr[0] = post_equals + "\n";
             }
-            else { 
+            else
+            {
                 // error
 
             }
+
+            // store in array
             switch (menuSel)
             {
                 case 1:
@@ -137,7 +142,7 @@ namespace _4180Project_COMConnector
                     break;
                 case 2:
                     SelTitle.Text = "Humidity";
-                    ArrayText.Text = string.Join("",humArr); 
+                    ArrayText.Text = string.Join("", humArr);
                     break;
                 case 3:
                     SelTitle.Text = "Mositure";
@@ -153,6 +158,8 @@ namespace _4180Project_COMConnector
             //mut.WaitOne();
             //String newData = inData;
             //mut.ReleaseMutex();
+
+            SaveDataToFile(data, first, post_equals, DateTime.Now);
         }
 
         private void label1_Click(object sender, EventArgs e)
@@ -182,7 +189,8 @@ namespace _4180Project_COMConnector
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if (mbedCOM.IsOpen) {
+            if (mbedCOM.IsOpen)
+            {
                 mbedCOM.Write(thresholdtxt.Text);
             }
         }
@@ -271,6 +279,47 @@ namespace _4180Project_COMConnector
         {
             menuHideShow(1);
             menuSel = 3;
+        }
+
+        private void SaveDataToFile(string data, string dataType, string dataValue, DateTime timestamp)
+        {
+            string filePath = "PHTdata.xlsx";
+
+
+            try
+            {
+                XLWorkbook spreadsheet;
+
+                // build or get spreadsheet
+                if (File.Exists(filePath))
+                {
+                    spreadsheet = new XLWorkbook(filePath);
+                }
+                else
+                {
+                    spreadsheet = new XLWorkbook();
+                    spreadsheet.Worksheets.Add("Data");
+
+                    // add headers if the file is new
+                    spreadsheet.Worksheet(1).Cell("A1").Value = "Type";
+                    spreadsheet.Worksheet(1).Cell("B1").Value = "Value";
+                    spreadsheet.Worksheet(1).Cell("C1").Value = "Timestamp";
+                }
+
+                // next available row
+                int lastRow = spreadsheet.Worksheet(1).LastRowUsed()?.RowNumber() + 1 ?? 1;
+
+                // populate data
+                spreadsheet.Worksheet(1).Cell($"A{lastRow}").Value = dataType;
+                spreadsheet.Worksheet(1).Cell($"B{lastRow}").Value = dataValue;
+                spreadsheet.Worksheet(1).Cell($"C{lastRow}").Value = timestamp;
+
+                spreadsheet.SaveAs(filePath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error writing to Excel file: " + ex.Message);
+            }
         }
     }
 }
