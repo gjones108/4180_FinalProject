@@ -22,13 +22,13 @@ DigitalOut LED(p23);
 I2C tempHum(p9,p10);
 AnalogIn moistureSensor(p20);
 Mutex LCD;
+Mutex SerialHold;
 InterruptIn RPG_A(p16);//encoder A and B pins/bits use interrupts
 InterruptIn RPG_B(p17);
 DigitalIn RPG_PB(p18); //encode pushbutton switch "SW" on PCB
 PwmOut speaker(p22);
 BusOut mbedleds(LED1, LED2, LED3, LED4); // initialize LEDs
 DigitalIn alarmSwitch(p30);
-
 
 bool alarm = true;
 
@@ -148,7 +148,9 @@ void lightSensorThread(void const *args){
             lightData[i] = lightData[i - 1];
         }
         lightData[0] = lightPercent;
+        SerialHold.lock();
         pc.printf("Light = %.1f%% \n", lightPercent);
+        SerialHold.unlock();
         Thread::wait(1000);
     }
 }
@@ -192,8 +194,10 @@ void tempHumThread(void const *args){
             humData[i] = humData[i - 1];
         }
         humData[0] = rh;
+        SerialHold.lock();
         pc.printf("Temp = %.1f F \n", temper);
         pc.printf("Relative Humidity = %.1f%% \n", rh);
+        SerialHold.unlock();
         Thread::wait(5000);
     }
 }
@@ -251,9 +255,10 @@ int main(){
             for (int i = 0; i < 2; i++){
                 pcIn[i] = pc.getc();
             }
-            pc.printf("%s \n", pcIn);
             moistureAlarmThresh = strtof(pcIn, &pEnd);
+            SerialHold.lock();
             pc.printf("%f \n", moistureAlarmThresh);
+            SerialHold.unlock();
         }
         //Main assigns LED and pulls analog moisture sensor value
         moisture = 1 - moistureSensor*1.1; //Output scales from 0-3v instead of 0-3.3v. Output is also inverted. 3.3v = 0 moisture, 0v = submerged.
@@ -261,7 +266,9 @@ int main(){
         if (moisturePercent > 100){
             moisturePercent = 100.0;
         }
+        SerialHold.lock();
         pc.printf("Moisture = %.1f%% \n", moisturePercent);
+        SerialHold.unlock();
         for(int i = 9; i > 0; i--){
             moistureData[i] = moistureData[i - 1];
         }
