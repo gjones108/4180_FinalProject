@@ -65,9 +65,11 @@ volatile int old_enc = 0;
 volatile int enc_count = 2;
 volatile int selLoc;
 
+char IPAdress[10];
 const int lookup_table[] = {0,-1,1,0,1,0,0,-1,-1,0,0,1,0,1,-1,0};
 
-void SendCMD(),getreply(),ESPconfig(),ESPsetbaudrate(),updateWebsite();
+void SendCMD(),getreply(),ESPconfig(),ESPsetbaudrate();
+void updateWebsite(float, float, float, float);
 void dev_recv()
 {
     while(esp.readable()) {
@@ -292,6 +294,7 @@ int main(){
     int prevSel = 0;
     float moisture;
     float moisturePercent;
+    //int IPcount = 0;
     while(1){
         alarm = alarmSwitch;
         LED = alarm;
@@ -322,7 +325,7 @@ int main(){
         else{
             speaker = 0;
         }
-        //updateWebsite();
+        
         moistureData[0] = moisturePercent;
         if (!RPG_PB){
             PB_callback();
@@ -350,6 +353,8 @@ int main(){
             }
             // Printing selection square
             uLCD.filled_rectangle(0,30+selLoc,5, 40+selLoc, 0xFFFF20);
+            uLCD.locate(1,12);
+            uLCD.printf(IPAdress);
             LCD.unlock();
         }
         else{
@@ -418,7 +423,11 @@ int main(){
                     break;
             }
         }
+        // if (IPcount == 2){
+        //     updateWebsite(moisturePercent,lightPercent,temper,rh);
+        // }
         Thread::wait(500);
+        //IPcount += 1;
         //pc.printf("enc_count: %d \n", enc_count);
     }
 }
@@ -437,7 +446,7 @@ void ESPconfig()
     timeout=5;
     getreply();
     pc.printf(buf);
-    uLCD.printf(buf);
+    //uLCD.printf(buf);
  
     wait(2);
  
@@ -449,7 +458,7 @@ void ESPconfig()
     pc.printf(buf);
 
     wait(3);
-    uLCD.cls();
+    //uLCD.cls();
  
     // set CWMODE to 1=Station,2=AP,3=BOTH, default mode 1 (Station)
     pc.printf("\n---------- Setting Mode ----------\r\n");
@@ -472,7 +481,7 @@ void ESPconfig()
     timeout=10;
     getreply();
     pc.printf(buf);
-    uLCD.printf(buf);
+    //uLCD.printf(buf);
 
     wait(5);
  
@@ -482,10 +491,13 @@ void ESPconfig()
     timeout=3;
     getreply();
     pc.printf(buf);
-    uLCD.printf(buf);
+    //uLCD.printf(buf);
+    for (int i = 0; i < 15; i++){
+        IPAdress[i] = buf[i+25];
+    }
 
     wait(1);
-    uLCD.printf("Connection Status");
+    //uLCD.printf("Connection Status");
  
     pc.printf("\n---------- Get Connection Status ----------\r\n");
     strcpy(snd, "print(wifi.sta.status())\r\n");
@@ -501,49 +513,49 @@ void ESPconfig()
     wait(1);
         
         
-          pc.printf("\n---------- Setting up http server ----------\r\n");
-    strcpy(snd, "srv=net.createServer(net.TCP)\r\n");
-        SendCMD();
-        wait(1);
-        strcpy(snd, "srv:listen(80,function(conn)\r\n");
-        SendCMD();
-        wait(1);
-        strcpy(snd, "conn:on(\"receive\",function(conn,payload)\r\n");
-        SendCMD();
-        wait(1);
-        strcpy(snd, "print(payload)\r\n");
-        SendCMD();
-        wait(1);
+    //       pc.printf("\n---------- Setting up http server ----------\r\n");
+    // strcpy(snd, "srv=net.createServer(net.TCP)\r\n");
+    //     SendCMD();
+    //     wait(1);
+    //     strcpy(snd, "srv:listen(80,function(conn)\r\n");
+    //     SendCMD();
+    //     wait(1);
+    //     strcpy(snd, "conn:on(\"receive\",function(conn,payload)\r\n");
+    //     SendCMD();
+    //     wait(1);
+    //     strcpy(snd, "print(payload)\r\n");
+    //     SendCMD();
+    //     wait(1);
         
-        strcpy(snd, "conn:send(\"<!DOCTYPE html>\")\r\n");
-        SendCMD();
-      wait(1);
+    //     strcpy(snd, "conn:send(\"<!DOCTYPE html>\")\r\n");
+    //     SendCMD();
+    //   wait(1);
         
-        strcpy(snd, "conn:send(\"<html>\")\r\n");
-        SendCMD();
-      wait(1);
+    //     strcpy(snd, "conn:send(\"<html>\")\r\n");
+    //     SendCMD();
+    //   wait(1);
         
-        strcpy(snd, "conn:send(\"<h1> Hi James, NodeMcu.</h1>\")\r\n");
-      SendCMD();
-        wait(1);
+    //     strcpy(snd, "conn:send(\"<h1> Hi James, NodeMcu.</h1>\")\r\n");
+    //   SendCMD();
+    //     wait(1);
         
-        strcpy(snd, "conn:send(\"<h2> test</h2>\")\r\n");
-        SendCMD();
-        wait(1);
+    //     strcpy(snd, "conn:send(\"<h2> test</h2>\")\r\n");
+    //     SendCMD();
+    //     wait(1);
         
-        strcpy(snd, "conn:send(\"</html>\")\r\n");
-    SendCMD();
-    wait(1);
+    //     strcpy(snd, "conn:send(\"</html>\")\r\n");
+    // SendCMD();
+    // wait(1);
         
-        strcpy(snd, "end)\r\n");
-    SendCMD();
-    wait(1);
+    //     strcpy(snd, "end)\r\n");
+    // SendCMD();
+    // wait(1);
         
-        strcpy(snd, "conn:on(\"sent\",function(conn) conn:close() end)\r\n");
-    SendCMD();
-    wait(1);
-        strcpy(snd, "end)\r\n");
-    SendCMD();
+    //     strcpy(snd, "conn:on(\"sent\",function(conn) conn:close() end)\r\n");
+    // SendCMD();
+    // wait(1);
+    //     strcpy(snd, "end)\r\n");
+    // SendCMD();
     wait(1);
         timeout=17;
     getreply();
@@ -575,14 +587,33 @@ void getreply()
     }
 }
 
-void updateWebsite(){
-            strcpy(snd, "conn:on(\"receive\",function(conn,payload)\r\n");
+void updateWebsite(float moisturePercent,float lightPercent,float temper,float rh){
+        
+//strcpy(snd, "srv=net.createServer(net.TCP)\r\n");
+        //SendCMD();
+        //wait(1);
+        // strcpy(snd, "srv:listen(80,function(conn)\r\n");
+        // SendCMD();
+        // wait(1);
+        // strcpy(snd, "conn:on(\"receive\",function(conn,payload)\r\n");
+        // SendCMD();
+        // wait(1);
+        // strcpy(snd, "print(payload)\r\n");
+        // SendCMD();
+        // wait(1);
+                  pc.printf("\n---------- Setting up http server ----------\r\n");
+    strcpy(snd, "srv=net.createServer(net.TCP)\r\n");
+        SendCMD();
+        wait(1);
+                strcpy(snd, "srv:listen(80,function(conn)\r\n");
+        SendCMD();
+        wait(1);
+        strcpy(snd, "conn:on(\"receive\",function(conn,payload)\r\n");
         SendCMD();
         wait(1);
         strcpy(snd, "print(payload)\r\n");
         SendCMD();
         wait(1);
-        
         strcpy(snd, "conn:send(\"<!DOCTYPE html>\")\r\n");
         SendCMD();
       wait(1);
@@ -590,15 +621,12 @@ void updateWebsite(){
         strcpy(snd, "conn:send(\"<html>\")\r\n");
         SendCMD();
       wait(1);
-
-    char moistureString[12];
-      sprintf(moistureString, "%f", moistureData);
+        char moistureString[12];
+      sprintf(moistureString, "%f", moisturePercent);
       char buffer[50];
       strcpy(buffer, "conn:send(\"<h1> Moisture = ");
       strcat(buffer, moistureString);
       strcat(buffer, "</h1>\")\r\n");
-
-        
         strcpy(snd, buffer);
       SendCMD();
         wait(1);
@@ -610,15 +638,14 @@ void updateWebsite(){
         strcpy(snd, "conn:send(\"</html>\")\r\n");
     SendCMD();
     wait(1);
+
+            strcpy(snd, "conn:on(\"sent\",function(conn) conn:close() end)\r\n");
+    SendCMD();
+    wait(1);
         
         strcpy(snd, "end)\r\n");
     SendCMD();
     wait(1);
-        
-        strcpy(snd, "conn:on(\"sent\",function(conn) conn:close() end)\r\n");
-    SendCMD();
-    wait(1);
-        strcpy(snd, "end)\r\n");
-    SendCMD();
-    wait(1);
+    pc.printf(buf);
+        pc.printf("\r\nDONE");
 }
