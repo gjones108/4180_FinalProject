@@ -11,13 +11,14 @@ I2C example: https://os.mbed.com/media/uploads/phill/mbed_course_notes_-_serial_
 #include "rtos.h"
 #include "uLCD_4DGL.h"
 #include "PinDetect.h"
+#include <cstdio>
 #include <string>
 #include <cstdlib>
 
 RawSerial pc(USBTX,USBRX);
 uLCD_4DGL uLCD(p13,p14,p15);
 
-I2C lightSensor(p28, p27);
+I2C lightSensor(p9, p10);
 DigitalOut LED(p23);
 I2C tempHum(p9,p10);
 AnalogIn moistureSensor(p20);
@@ -29,6 +30,17 @@ DigitalIn RPG_PB(p18); //encode pushbutton switch "SW" on PCB
 PwmOut speaker(p22);
 BusOut mbedleds(LED1, LED2, LED3, LED4); // initialize LEDs
 DigitalIn alarmSwitch(p30);
+
+Serial esp(p28, p27); // tx, rx
+DigitalOut reset(p26);
+Timer t;
+ 
+int  count,ended,timeout;
+char buf[2024];
+char snd[1024];
+ 
+char ssid[32] = "Garrett";     // enter WiFi router ssid inside the quotes
+char pwd [32] = "gjones108"; // enter WiFi router password inside the quotes
 
 bool alarm = true;
 
@@ -54,6 +66,21 @@ volatile int enc_count = 2;
 volatile int selLoc;
 
 const int lookup_table[] = {0,-1,1,0,1,0,0,-1,-1,0,0,1,0,1,-1,0};
+
+void SendCMD(),getreply(),ESPconfig(),ESPsetbaudrate(),updateWebsite();
+void dev_recv()
+{
+    while(esp.readable()) {
+        pc.putc(esp.getc());
+    }
+}
+ 
+void pc_recv()
+{
+    while(pc.readable()) {
+        esp.putc(pc.getc());
+    }
+}
 
 void Enc_change_ISR(void){
     int new_enc = RPG_A<<1 | RPG_B;//current encoder bits
@@ -210,11 +237,11 @@ int main(){
     rh = 0;
     menu = true;
     // Starting Screen
-    LCD.lock();
+    // LCD.lock();
     uLCD.locate(5,7);
     uLCD.text_height(2);
     uLCD.printf("Starting...");
-    LCD.unlock();
+    // LCD.unlock();
     //pc.printf("Starting... \n");
     for (int i = 0; i < 8; i++){
         mbedleds = pow(2.0,double(i%4));
@@ -226,6 +253,23 @@ int main(){
         mbedleds = 15;
         wait(0.1);
     }
+    reset=0; //hardware reset for 8266
+    pc.baud(9600);  // set what you want here depending on your terminal program speed
+    uLCD.baudrate(9600);
+    pc.printf("\f\n\r-------------ESP8266 Hardware Reset-------------\n\r");
+    wait(0.5);
+    reset=1;
+    timeout=2;
+    getreply();
+ 
+    esp.baud(9600);   // change this to the new ESP8266 baudrate if it is changed at any time.
+ 
+    //ESPsetbaudrate();   //******************  include this routine to set a different ESP8266 baudrate  ******************
+ 
+    ESPconfig();        //******************  include Config to set the ESP8266 configuration  ***********************
+
+    pc.attach(&pc_recv, Serial::RxIrq);
+    esp.attach(&dev_recv, Serial::RxIrq);
     mbedleds = 0;
     RPG_A.mode(PullUp);
     RPG_B.mode(PullUp);
@@ -278,6 +322,7 @@ int main(){
         else{
             speaker = 0;
         }
+        //updateWebsite();
         moistureData[0] = moisturePercent;
         if (!RPG_PB){
             PB_callback();
@@ -376,4 +421,204 @@ int main(){
         Thread::wait(500);
         //pc.printf("enc_count: %d \n", enc_count);
     }
+}
+
+void ESPconfig()
+{
+
+    wait(5);
+    pc.printf("\f---------- Starting ESP Config ----------\r\n\n");
+        strcpy(snd,".\r\n.\r\n");
+    SendCMD();
+        wait(1);
+    pc.printf("---------- Reset & get Firmware ----------\r\n");
+    strcpy(snd,"node.restart()\r\n");
+    SendCMD();
+    timeout=5;
+    getreply();
+    pc.printf(buf);
+    uLCD.printf(buf);
+ 
+    wait(2);
+ 
+    pc.printf("\n---------- Get Version ----------\r\n");
+    strcpy(snd,"print(node.info())\r\n");
+    SendCMD();
+    timeout=4;
+    getreply();
+    pc.printf(buf);
+
+    wait(3);
+    uLCD.cls();
+ 
+    // set CWMODE to 1=Station,2=AP,3=BOTH, default mode 1 (Station)
+    pc.printf("\n---------- Setting Mode ----------\r\n");
+    strcpy(snd, "wifi.setmode(wifi.STATION)\r\n");
+    SendCMD();
+    timeout=4;
+    getreply();
+    pc.printf(buf);
+
+    wait(2);
+ 
+    pc.printf("\n---------- Connecting to AP ----------\r\n");
+    pc.printf("ssid = %s   pwd = %s\r\n",ssid,pwd);
+    strcpy(snd, "wifi.sta.config(\"");
+    strcat(snd, ssid);
+    strcat(snd, "\",\"");
+    strcat(snd, pwd);
+    strcat(snd, "\")\r\n");
+    SendCMD();
+    timeout=10;
+    getreply();
+    pc.printf(buf);
+    uLCD.printf(buf);
+
+    wait(5);
+ 
+    pc.printf("\n---------- Get IP's ----------\r\n");
+    strcpy(snd, "print(wifi.sta.getip())\r\n");
+    SendCMD();
+    timeout=3;
+    getreply();
+    pc.printf(buf);
+    uLCD.printf(buf);
+
+    wait(1);
+    uLCD.printf("Connection Status");
+ 
+    pc.printf("\n---------- Get Connection Status ----------\r\n");
+    strcpy(snd, "print(wifi.sta.status())\r\n");
+    SendCMD();
+    timeout=5;
+    getreply();
+    pc.printf(buf);
+    //uLCD.printf(buf);
+ 
+    pc.printf("\n\n\n  If you get a valid (non zero) IP, ESP8266 has been set up.\r\n");
+    pc.printf("  Run this if you want to reconfig the ESP8266 at any time.\r\n");
+    pc.printf("  It saves the SSID and password settings internally\r\n");
+    wait(1);
+        
+        
+          pc.printf("\n---------- Setting up http server ----------\r\n");
+    strcpy(snd, "srv=net.createServer(net.TCP)\r\n");
+        SendCMD();
+        wait(1);
+        strcpy(snd, "srv:listen(80,function(conn)\r\n");
+        SendCMD();
+        wait(1);
+        strcpy(snd, "conn:on(\"receive\",function(conn,payload)\r\n");
+        SendCMD();
+        wait(1);
+        strcpy(snd, "print(payload)\r\n");
+        SendCMD();
+        wait(1);
+        
+        strcpy(snd, "conn:send(\"<!DOCTYPE html>\")\r\n");
+        SendCMD();
+      wait(1);
+        
+        strcpy(snd, "conn:send(\"<html>\")\r\n");
+        SendCMD();
+      wait(1);
+        
+        strcpy(snd, "conn:send(\"<h1> Hi James, NodeMcu.</h1>\")\r\n");
+      SendCMD();
+        wait(1);
+        
+        strcpy(snd, "conn:send(\"<h2> test</h2>\")\r\n");
+        SendCMD();
+        wait(1);
+        
+        strcpy(snd, "conn:send(\"</html>\")\r\n");
+    SendCMD();
+    wait(1);
+        
+        strcpy(snd, "end)\r\n");
+    SendCMD();
+    wait(1);
+        
+        strcpy(snd, "conn:on(\"sent\",function(conn) conn:close() end)\r\n");
+    SendCMD();
+    wait(1);
+        strcpy(snd, "end)\r\n");
+    SendCMD();
+    wait(1);
+        timeout=17;
+    getreply();
+    pc.printf(buf);
+        pc.printf("\r\nDONE");
+}
+ 
+void SendCMD()
+{
+    esp.printf("%s", snd);
+}
+ 
+void getreply()
+{
+    memset(buf, '\0', sizeof(buf));
+    t.start();
+    ended=0;
+    count=0;
+    while(!ended) {
+        if(esp.readable()) {
+            buf[count] = esp.getc();
+            count++;
+        }
+        if(t.read() > timeout) {
+            ended = 1;
+            t.stop();
+            t.reset();
+        }
+    }
+}
+
+void updateWebsite(){
+            strcpy(snd, "conn:on(\"receive\",function(conn,payload)\r\n");
+        SendCMD();
+        wait(1);
+        strcpy(snd, "print(payload)\r\n");
+        SendCMD();
+        wait(1);
+        
+        strcpy(snd, "conn:send(\"<!DOCTYPE html>\")\r\n");
+        SendCMD();
+      wait(1);
+        
+        strcpy(snd, "conn:send(\"<html>\")\r\n");
+        SendCMD();
+      wait(1);
+
+    char moistureString[12];
+      sprintf(moistureString, "%f", moistureData);
+      char buffer[50];
+      strcpy(buffer, "conn:send(\"<h1> Moisture = ");
+      strcat(buffer, moistureString);
+      strcat(buffer, "</h1>\")\r\n");
+
+        
+        strcpy(snd, buffer);
+      SendCMD();
+        wait(1);
+        
+        strcpy(snd, "conn:send(\"<h2> test</h2>\")\r\n");
+        SendCMD();
+        wait(1);
+        
+        strcpy(snd, "conn:send(\"</html>\")\r\n");
+    SendCMD();
+    wait(1);
+        
+        strcpy(snd, "end)\r\n");
+    SendCMD();
+    wait(1);
+        
+        strcpy(snd, "conn:on(\"sent\",function(conn) conn:close() end)\r\n");
+    SendCMD();
+    wait(1);
+        strcpy(snd, "end)\r\n");
+    SendCMD();
+    wait(1);
 }
